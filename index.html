@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>威尔胜任力评估系统</title>
+    <style>
+        :root {
+            --primary: #0ea5e9;
+            --primary-glow: rgba(14, 165, 233, 0.5);
+            --bg-gradient-1: #0f172a;
+            --bg-gradient-2: #1e293b;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-gradient-1), var(--bg-gradient-2));
+            background-attachment: fixed;
+            color: var(--text-main);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* 科技风背景装饰 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 15% 50%, rgba(14, 165, 233, 0.08), transparent 25%),
+                        radial-gradient(circle at 85% 30%, rgba(56, 189, 248, 0.08), transparent 25%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .section-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            animation: fadeInUp 0.8s ease-out backwards;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .question-block {
+            margin-bottom: 30px;
+            padding: 15px;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+
+        .question-block:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+
+        .options-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .options-group.vertical {
+            flex-direction: column;
+        }
+
+        /* 自定义单选按钮样式 */
+        .option-label {
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+
+        .options-group.vertical .option-label {
+            text-align: left;
+        }
+
+        .option-label:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+        }
+
+        input[type="radio"] {
+            display: none;
+        }
+
+        input[type="radio"]:checked + .option-label {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary-glow);
+            transform: translateY(-2px);
+        }
+
+        .submit-btn {
+            display: block;
+            width: 100%;
+            padding: 18px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(135deg, #0284c7, #3b82f6);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 20px rgba(2, 132, 199, 0.3);
+            margin-top: 20px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 25px rgba(2, 132, 199, 0.5);
+        }
+
+        /* 结果弹窗 */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--bg-gradient-2);
+            border: 1px solid var(--primary);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 40px;
+            box-shadow: 0 0 40px var(--primary-glow);
+            transform: scale(0.9);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .result-item {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .result-item:last-child { border-bottom: none; }
+        
+        .result-title { font-size: 1.2rem; color: var(--primary); margin-bottom: 5px; }
+        .result-score { font-size: 2rem; font-weight: bold; color: #fff; margin-bottom: 5px; }
+        .result-desc { color: #cbd5e1; }
+
+        .close-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .close-btn:hover { background: rgba(255,255,255,0.2); }
+
+        /* 动画 */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 响应式 */
+        @media (max-width: 600px) {
+            .options-group { flex-direction: column; }
+            .option-label { width: 100%; }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+            <img src="willlogo40.jpg" alt="Will Logo" style="height: 60px; width: auto;">
+            <h1>威尔胜任力评估</h1>
+        </div>
+        <p class="subtitle">请根据您的真实情况，选择最符合的选项</p>
+    </header>
+
+    <form id="assessmentForm">
+        <div class="section-card" style="animation-delay: 0s;">
+            <h2 class="section-title">个人信息</h2>
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px; font-size: 1.1rem;">您的姓名：</label>
+                <input type="text" id="userName" placeholder="请输入您的姓名" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(255, 255, 255, 0.05); color: var(--text-main); font-size: 1rem;">
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px; font-size: 1.1rem;">您的岗位：</label>
+                <input type="text" id="userPosition" placeholder="请输入您的岗位" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(255, 255, 255, 0.05); color: var(--text-main); font-size: 1rem;">
+            </div>
+        </div>
+        <div id="questionsContainer"></div>
+        <button type="button" class="submit-btn" onclick="calculateResults()">提交评估生成报告</button>
+    </form>
+</div>
+
+<!-- 结果弹窗 -->
+<div class="modal-overlay" id="resultModal">
+    <div class="modal-content">
+        <div style="position: relative;">
+            <h2 style="text-align: center; margin-bottom: 30px; color: #38bdf8;">评估结果报告</h2>
+            <button class="close-btn" onclick="checkDownloadStatus()" style="position: absolute; top: 0; right: 0; width: auto; padding: 5px 10px; background: rgba(255,255,255,0.1);">×</button>
+        </div>
+        <div id="resultContent"></div>
+        <button class="close-btn" onclick="downloadPDF()" style="margin-bottom: 10px;">下载 PDF 报告</button>
+    </div>
+</div>
+
+<script>
+    // 题库与计分规则配置
+    const assessmentData = [
+        {
+            id: "sec1",
+            title: "一、抗压能力测评",
+            type: "5-scale",
+            options: [
+                { value: 1, text: "A 完全不符合" }, { value: 2, text: "B 不太符合" },
+                { value: 3, text: "C 有点符合" }, { value: 4, text: "D 比较符合" }, { value: 5, text: "E 完全符合" }
+            ],
+            questions: [
+                "如果我无法更换现在的工作，那么即使这份工作再差，我也会努力让自己喜欢它。",
+                "如果让我放弃眼前熟悉的工作，去从头开始接受某个新任务，我会感到很兴奋。",
+                "我不怕别人在背后说我的闲话，因为我做事的目的并不是为了让他们感到满意。",
+                "我喜欢做事，喜欢不停地工作，我享受工作，从中获得了真正的快乐。",
+                "我善于跟别人合作，巧妙地利用他们的力量来帮我解决麻烦，而不愿单打独斗。",
+                "不快乐的时候，我就去做事，让自己忙碌起来，这样就会慢慢地忘却烦恼。",
+                "我现在既没有肠胃的毛病，晚上的睡眠也很好，肌体的各项生理功能运转也很正常。",
+                "工作中，我喜欢尝试使用新的方法，即使因此要多费时间和精力也在所不惜。",
+                "当我感到苦闷的时候，我会向别人倾诉，听取他们建议，而非默默地发愁。",
+                "我觉得自己有能力改变别人对我的看法，让他们喜欢我和理解我，而不是来为难我。",
+                "我很喜欢自己，觉得自己有许多优点，而不太局的自己有什么致命的缺点。",
+                "我相信，除了生命以外，所有其他的东西都不重要，都是可以被舍弃的。",
+                "我相信任何问题都会有办法来解决它们，而且我相信我一定能找到这个解决的办法。",
+                "我没有必须要坚持的东西，只要对我有好处，我可以随时改变自己的态度。",
+                "这个世界任何事情都有可能办到，只要不断努力和付出，成功的可能性就会越来越大。",
+                "很多时候，我觉得自己就像一名赌徒，只要有成功的可能，我就舍得投入地去搏一把。",
+                "我认为：对于这世上的很多事情，只要自己尽力去做就可以了，余下的只能等待命运的安排。",
+                "如果意外地被降职或被辞退工作，我将仍然保持镇静，而不显得慌乱紧张。",
+                "做事失败时，我通常找外部的原因，而不愿意承认是因为自己能力不行或办法不得当。",
+                "当我的事业长久陷入停滞状态，我将面临失业的危险时，我会变得越来越焦虑。"
+            ],
+            scoreLogic: (qIndex, val) => (qIndex === 19) ? (6 - val) : val, // 第20题反向计分
+            evaluate: (score) => {
+                if(score >= 83) return "抗压能力非常强，勇于面对挑战，善于自我调整，遇到困难都能够积极应对。";
+                if(score >= 65) return "抗压能力较强，除了事态严重时，多数情况能够从容应对。";
+                if(score >= 47) return "抗压能力一般，面对压力偶尔会选择逃避。";
+                return "抗压能力差，不愿意改变自我，遇到困难容易退缩。";
+            }
+        },
+        {
+            id: "sec2",
+            title: "二、责任心测评",
+            type: "5-scale",
+            options: [
+                { value: 1, text: "A 完全不符合" }, { value: 2, text: "B 不太符合" },
+                { value: 3, text: "C 有点符合" }, { value: 4, text: "D 比较符合" }, { value: 5, text: "E 完全符合" }
+            ],
+            questions: [
+                "我常常有意识地忍住不告诉别人我所知道的同事的隐私以及公司的内部消息。",
+                "我希望自己能像有些人那样，做到游戏人生，凡事糊涂，这样活得不会那么累。",
+                "当我所在的团队做项目失败了，即使我没有任何过错，错在别人，我也会感到内疚。",
+                "完成工作任务后，即使很疲倦或感到枯燥无味，我仍旧会及时进行书面的工作总结。",
+                "我常常为自己没有达到更高的标准而感到焦虑，虽然在别人眼中，我已经做得很好了。",
+                "如果我的工作表现，没有达到上级对我的期望，那么我会为此感到难过和自责。",
+                "我没有制定工作计划的习惯，我喜欢在完成任务的过程中根据实际情况，随机应变。",
+                "即使我已经做得很好了，顺利完成了工作任务，但我内心仍旧会觉得不够好。",
+                "撰写工作报告的时候，我会反反复复地检查，总是担心遗漏了什么或有什么错别字。",
+                "在完成团队合作的工作时，即使分配给我的任务很不合理，我也会服从团队的安排。",
+                "我无法做到一心二用，在一个时间内，我只能做到集中注意力做好一件事情。",
+                "接到工作任务之后，即使时间很充裕，我也会立即着手去做，我喜欢尽快完成任务。",
+                "只要做事认真、用心，即使最后工作任务没有完成，我问心无愧。",
+                "我能全身心投入工作中，因为我觉得工作带给自己的收获，值得我为之付出。",
+                "如果任务紧张，我就会牺牲自己的休息时间，加班加点，以便能如期顺利完成。",
+                "为了能更好地完成工作任务，我会不惜增加失败的风险，而使用新的方法和手段。",
+                "如果上班或者开会迟到了，而自己还没准备好出门，我会心急如焚到崩溃。",
+                "我曾经忘记与别人的约会，因为当时我在投入着工作，忘记其他一切事情。",
+                "如果我不能在规定期限内完成工作任务，通常是因为任务太难所致。",
+                "我会仔细用笔记下要做的工作，将其编入工作计划总，并时常检查其完成情况。"
+            ],
+            scoreLogic: (qIndex, val) => [1, 6, 12, 17].includes(qIndex) ? (6 - val) : val, // 2,7,13,18题反向计分 (索引为1,6,12,17)
+            evaluate: (score) => {
+                if(score >= 81) return "责任心非常强，做事投入，对自己要求高，工作细致、认真，遵守时间，顾全大局。但因追求完美而过分扩大自己的责任感，不一定快乐、开朗。";
+                if(score >= 61) return "责任心较强，做事能够认真负责，总体上讲能够出色地完成各项工作，但不过分追求完美，能够很好地把握工作与生活。";
+                if(score >= 41) return "责任心一般，在自己力所能及的情况下，能够完成工作，但不够投入，遇到困难的任务可能会退缩。";
+                return "责任心较差，凡事都无所谓，追求自己生活的轻松，工作容易受情绪的影响。";
+            }
+        },
+        {
+            id: "sec3",
+            title: "三、自信心测评",
+            type: "yes-no",
+            options: [{ value: 'yes', text: "是" }, { value: 'no', text: "否" }],
+            questions: [
+                "你总是觉得自己比别人差。", "你与别人合作总是很好。", "并非故意的情况下伤了别人的心，你也会难过。",
+                "你认为自己是个较完美的人。", "在商场，店员的服务态度不好，你会告诉他们的经理。", "为了不使他人难过，你会放弃自己喜欢做的事。",
+                "受到批评，你会觉得难过。", "你通常不对人说出你真正的意见。", "你任由他人来支配你的生活。",
+                "对于自己下了决心的事，即使他人认为不可能，你也要试一试。", "你对自己的外表满意。", "你懂得搭配衣服。",
+                "在聚会上，只有你穿得很随意，你会感到不自在。", "你是个受欢迎的人。", "你认为自己很有魅力。",
+                "你有幽默感。", "目前的工作是你的专长。", "你认为自己的能力比别人强。",
+                "危急时刻，你总是很冷静。", "重要集会或晚宴上，你想上洗手间，但你通常是忍着直到集会或宴会结束。", "你认为自己只是个很平常的人。",
+                "你经常希望自己长得像某个明星。", "你认为你的优点比缺点多。", "你很少欣赏自己的照片。",
+                "你会为了讨好他人而打扮自己。", "你勉强自己做许多不愿意做的事。", "别人赞美你，你表示怀疑。",
+                "你经常羡慕别人的成就。", "即使你没错，你也经常跟人说抱歉。", "你通常以邮购的方式买性感内衣，而不亲自到售衣店里去。"
+            ],
+            scoreLogic: (qIndex, val) => {
+                // 属于"是=1, 否=0"的题号(1-based): 2,4,5,10,12,14,15,16,17,18,19
+                const yesIs1 = [1, 3, 4, 9, 11, 13, 14, 15, 16, 17, 18]; // 0-based index
+                if (yesIs1.includes(qIndex)) return val === 'yes' ? 1 : 0;
+                return val === 'no' ? 1 : 0; // 其余为"是=0, 否=1"
+            },
+            evaluate: (score) => {
+                if(score >= 20) return "信心十足";
+                if(score >= 9) return "较为自信";
+                return "缺乏自信";
+            }
+        },
+        {
+            id: "sec4",
+            title: "四、问题处理能力测评",
+            type: "custom-options",
+            questions: [
+                { q: "你书房的书被水管漏水浸坏了：", opts: ["你非常不快，不停地抱怨。", "你想借此不交物管费，并写了批评信。", "你自己擦洗、清理、烤晒图书，并修理水管。"] },
+                { q: "在节假日里，你和爱人总会为去看望谁的父母发生争执：", opts: ["你认为最好的办法就是谁的父母都不去看望，以减少麻烦。", "订个计划，这次看望爱人的父母，下次看望你的父母，轮流看望。", "决定在重要的节假日里，和你的家人团聚，而在其他节假日里与爱人的家人共度。"] },
+                { q: "如果某个朋友要结婚了，如果你去参加婚礼，你当然得送红包，这时：", opts: ["事先对对方说你有事不能参加，事实上你并没有什么事情，你只是为了不送红包。", "对那些你认为重要的朋友，比如可以给你带来生意上的帮助的人，你才愿意参加其婚礼并送红包。", "你不送红包，但经常收集一些小的或比较奇特的礼物来应付朋友结婚这类事情。"] },
+                { q: "当你感觉身体不舒服时：", opts: ["你会拖延着不去就诊，认为慢慢会好的。", "自己诊断一下，去药房买药。", "把这种情况及时告诉家人，然后去医院检查。"] },
+                { q: "生活中的各种压力使你和家人变得容易发怒时：", opts: ["你会想法向朋友倾诉。", "你设法避免和家人争吵。", "你和家人一起讨论，研究解决的办法。"] },
+                { q: "你的亲友在事故中受了重伤，你得知消息时：", opts: ["失声痛哭，不知该如何是好。", "叫来医生，要求服镇静剂来度以后的几小时。", "抑制自己的感情，因为你还要告诉其他亲友。"] },
+                { q: "你的能力得到承认，并得到了承担一份重要工作的机会：", opts: ["你会放弃这个机会，因为这项工作的要求太高。", "你怀疑自己能否承担起这项工作。", "你仔细分析这项工作的要求，做好准备设法把它做好。"] },
+                { q: "一位好朋友将要结婚了，在你看来，他们的结合不会幸福：", opts: ["你会认真地规劝那位朋友，请他慎重考虑。", "努力说服你自己，让自己相信时间还允许朋友改变计划。", "你不着急，因为你相信一切都会好起来。"] },
+                { q: "当你和别人发生纠纷，不得不去法庭诉讼时：", opts: ["你会因为焦虑和不安而失眠。", "你不去想这件事，出庭时再设法应付。", "你把这件事看得很平常。"] },
+                { q: "当你和邻居发生争执，却没有争出结果时：", opts: ["你借酒浇愁，想把这件不快的事忘掉。", "请教律师如何与邻居打官司。", "外出散步或消遣，以平息心中的愤怒。"] }
+            ],
+            scoreLogic: (qIndex, val) => parseInt(val), // 选项1得1分，选项2得2分，选项3得3分
+            evaluate: (score) => {
+                if(score > 25) return "你处理问题的能力很强。";
+                if(score >= 15) return "你解决问题的能力一般，有时稍有迟疑。";
+                return "你解决问题的能力较差。";
+            }
+        },
+        {
+            id: "sec5",
+            title: "五、成就导向测试",
+            type: "yes-no",
+            options: [{ value: 'yes', text: "是" }, { value: 'no', text: "否" }],
+            questions: [
+                "在通常情况下，工作之余的时间，你是否都打发在和朋友喝茶、闲聊或其他消遣中？",
+                "如果你一个人呆在办公室里，你是否感到无聊？",
+                "你认为有人羡慕你，比有人喜欢你更让你高兴，因为有人羡慕证明你很成功，是吗？",
+                "通常，在与人交谈时，你是否表现得很耐心，等对方把话说完，而不打断对方？",
+                "在亲友眼中，你是否是一个生活得很自在、休闲的人？",
+                "如果你正忙着，你的同事来与你聊天，你会感到不耐烦吗？",
+                "无论工作还是生活中，你不主张活得太累，因而你总是知难而退，是吗？",
+                "你总是把工作带回家，晚上工作到很晚才睡，是吗？",
+                "在赴约时，你是否能够很准时去？",
+                "你的下属，或者其他与你关系密切的人工作效率低，你无法容忍，是吗？",
+                "你付出很大努力做出了成绩，却没有得到领导肯定，你会感到失意，是吗？",
+                "当一群人在一起谈论一些无关紧要的事情时，你总想着溜回工作岗位上去，是吗？"
+            ],
+            scoreLogic: (qIndex, val) => {
+                // 题号(1-based): 3,6,8,9,10,11,12 是=1, 否=0
+                const yesIs1 = [2, 5, 7, 8, 9, 10, 11]; // 0-based
+                if (yesIs1.includes(qIndex)) return val === 'yes' ? 1 : 0;
+                return val === 'no' ? 1 : 0;
+            },
+            evaluate: (score) => {
+                if(score >= 8) return "说明你是一个成就欲望很强的人。";
+                if(score >= 5) return "说明你的成就欲望一般。";
+                return "说明你成就欲望很低，对事业成功与否抱顺其自然的态度。";
+            }
+        },
+        {
+            id: "sec6",
+            title: "六、自律能力测试题",
+            type: "yes-no",
+            options: [{ value: 'yes', text: "是" }, { value: 'no', text: "否" }],
+            questions: [
+                "当你因为娱乐耽误了计划好的重要工作，你会不会后悔？",
+                "当被人要求做一件事情，并且你知道这件事情有很大的难度时，你是否会认为这是一项有趣的挑战？",
+                "如果某项工作应当在当月5日完成，但你知道即使6日完成也没有人批评你，你会在5日完成吗？",
+                "你经常仔细地计划你的资金吗？",
+                "你通常能准时缴付各种账单吗？",
+                "你是否善于记录、存放各种资料？",
+                "如果你需要用某一证件，你能否自己在一两分钟内找到它？",
+                "如果你需要赶一项任务，你能否一连数天都每天工作12小时以上？",
+                "你是否经常主动做一些份外工作？",
+                "你能长时间自动自发地工作吗？",
+                "你是否在没有人要求下，为自己设定工作目标及完成截止日期？",
+                "你是否经常计划如何使用你的时间？",
+                "你今天是否做了时间支配计划？",
+                "如果某件事你不乐意做，但有上司要求你做，你会拒绝吗？",
+                "你总是能专注地工作，而不会受外界干扰吗？",
+                "如果某项工作很重要，即使没有人强迫你，你也会自发地做好它吗？",
+                "有一项重要的工作需要加班，而这天晚上恰又有你非常喜爱的球赛，你会选择加班吗？",
+                "碰上棘手的难题时，你总是首先想办法自己解决吗？",
+                "你需要一些资料却无法得到，你会立即找人提供帮助吗？",
+                "你不存在多次决心做某件事却最终因为主观原因没有做成的情形，对吗？"
+            ],
+            scoreLogic: (qIndex, val) => val === 'yes' ? 1 : 0,
+            evaluate: (score) => {
+                if(score >= 15) return "自律能力强";
+                if(score >= 10) return "自律能力一般";
+                if(score >= 5) return "自律能力较差";
+                return "自律能力就太差了";
+            }
+        }
+    ];
+
+    // 渲染问卷
+    const container = document.getElementById('questionsContainer');
+    let delay = 0;
+
+    assessmentData.forEach((section, secIndex) => {
+        const sectionDiv = document.createElement('div');
+        sectionDiv.className = 'section-card';
+        sectionDiv.id = section.id; // 添加id属性
+        sectionDiv.style.animationDelay = `${delay}s`;
+        delay += 0.1;
+
+        const title = document.createElement('h2');
+        title.className = 'section-title';
+        title.innerText = section.title;
+        sectionDiv.appendChild(title);
+
+        section.questions.forEach((q, qIndex) => {
+            const qBlock = document.createElement('div');
+            qBlock.className = 'question-block';
+            
+            const qText = document.createElement('div');
+            qText.className = 'question-text';
+            qText.innerText = `${qIndex + 1}. ${typeof q === 'string' ? q : q.q}`;
+            qBlock.appendChild(qText);
+
+            const optionsGroup = document.createElement('div');
+            optionsGroup.className = `options-group ${section.type === 'custom-options' ? 'vertical' : ''}`;
+
+            const opts = section.type === 'custom-options' ? q.opts.map((text, i) => ({value: i+1, text: `(${i+1}) ${text}`})) : section.options;
+
+            opts.forEach(opt => {
+                const inputId = `${section.id}_q${qIndex}_opt${opt.value}`;
+                const inputName = `${section.id}_q${qIndex}`;
+
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = inputName;
+                radio.id = inputId;
+                radio.value = opt.value;
+
+                const label = document.createElement('label');
+                label.htmlFor = inputId;
+                label.className = 'option-label';
+                label.innerText = opt.text;
+
+                optionsGroup.appendChild(radio);
+                optionsGroup.appendChild(label);
+            });
+
+            qBlock.appendChild(optionsGroup);
+            sectionDiv.appendChild(qBlock);
+        });
+
+        container.appendChild(sectionDiv);
+    });
+
+    // 跟踪PDF是否已下载
+    let pdfDownloaded = false;
+
+    // 计算结果
+    function calculateResults() {
+        const form = document.getElementById('assessmentForm');
+        const formData = new FormData(form);
+        let allAnswered = true;
+        let resultsHTML = '';
+        let firstUnansweredQuestion = null;
+
+        // 获取用户信息
+        const userName = document.getElementById('userName').value.trim();
+        const userPosition = document.getElementById('userPosition').value.trim();
+
+        // 验证用户信息
+        if (!userName) {
+            alert("请输入您的姓名！");
+            return;
+        }
+        if (!userPosition) {
+            alert("请输入您的岗位！");
+            return;
+        }
+
+        assessmentData.forEach(section => {
+            let sectionScore = 0;
+            let answeredCount = 0;
+
+            section.questions.forEach((_, qIndex) => {
+                const val = formData.get(`${section.id}_q${qIndex}`);
+                if (val !== null) {
+                    answeredCount++;
+                    // 转换值为数字（如果是数字字符串）
+                    const parsedVal = isNaN(val) ? val : Number(val);
+                    sectionScore += section.scoreLogic(qIndex, parsedVal);
+                } else if (!firstUnansweredQuestion) {
+                    // 找到第一个未回答的问题
+                    const sectionElement = document.getElementById(section.id);
+                    if (sectionElement) {
+                        // 找到该section内的第qIndex个question-block
+                        const questionBlocks = sectionElement.querySelectorAll('.question-block');
+                        if (questionBlocks[qIndex]) {
+                            firstUnansweredQuestion = questionBlocks[qIndex];
+                        } else {
+                            // 如果找不到具体的question-block，就定位到section
+                            firstUnansweredQuestion = sectionElement;
+                        }
+                    }
+                }
+            });
+
+            if (answeredCount < section.questions.length) {
+                allAnswered = false;
+            }
+
+            const evaluation = section.evaluate(sectionScore);
+            
+            resultsHTML += `
+                <div class="result-item">
+                    <div class="result-title">${section.title}</div>
+                    <div class="result-score">得分: ${sectionScore}</div>
+                    <div class="result-desc">${evaluation}</div>
+                </div>
+            `;
+        });
+
+        if (!allAnswered) {
+            alert("您还有未完成的题目，请检查并全部作答后再提交！");
+            // 滚动到第一个未回答的问题
+            if (firstUnansweredQuestion) {
+                firstUnansweredQuestion.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // 给未回答的问题添加视觉提示
+                firstUnansweredQuestion.style.border = '2px solid #ef4444';
+                firstUnansweredQuestion.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                // 3秒后移除视觉提示
+                setTimeout(() => {
+                    firstUnansweredQuestion.style.border = '';
+                    firstUnansweredQuestion.style.backgroundColor = '';
+                }, 3000);
+            }
+            return;
+        }
+
+        // 重置PDF下载状态
+        pdfDownloaded = false;
+
+        // 将用户信息存储到全局变量中，供下载PDF时使用
+        window.userInfo = {
+            name: userName,
+            position: userPosition
+        };
+
+        // 禁用所有输入控件，防止用户修改
+        disableAllInputs();
+
+        document.getElementById('resultContent').innerHTML = resultsHTML;
+        document.getElementById('resultModal').classList.add('active');
+    }
+
+    // 禁用所有输入控件
+    function disableAllInputs() {
+        // 禁用文本输入框
+        document.getElementById('userName').disabled = true;
+        document.getElementById('userPosition').disabled = true;
+        
+        // 禁用所有单选按钮
+        const radioButtons = document.querySelectorAll('input[type="radio"]');
+        radioButtons.forEach(radio => {
+            radio.disabled = true;
+        });
+        
+        // 禁用提交按钮
+        const submitBtn = document.querySelector('.submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = '已提交评估';
+        submitBtn.style.backgroundColor = '#64748b';
+        submitBtn.style.boxShadow = 'none';
+        submitBtn.style.transform = 'none';
+    }
+
+    function downloadPDF() {
+        // 获取用户信息
+        const userInfo = window.userInfo || { name: '未知', position: '未知' };
+        
+        // 创建一个临时的HTML元素来保存报告内容
+        const reportContainer = document.createElement('div');
+        reportContainer.style.width = '210mm';
+        reportContainer.style.padding = '15mm';
+        reportContainer.style.fontFamily = 'Arial, sans-serif';
+        reportContainer.style.fontSize = '12px';
+        reportContainer.style.lineHeight = '1.5';
+        reportContainer.style.backgroundColor = '#ffffff';
+        reportContainer.style.color = '#000000';
+        reportContainer.style.position = 'absolute';
+        reportContainer.style.top = '-9999px';
+        reportContainer.style.left = '-9999px';
+        
+        // 添加标题
+        const title = document.createElement('h1');
+        title.textContent = '威尔胜任力评估系统 - 评估结果报告';
+        title.style.textAlign = 'center';
+        title.style.fontSize = '16px';
+        title.style.marginBottom = '10px';
+        reportContainer.appendChild(title);
+        
+        // 添加用户信息
+        const userInfoDiv = document.createElement('div');
+        userInfoDiv.style.textAlign = 'center';
+        userInfoDiv.style.marginBottom = '15px';
+        userInfoDiv.innerHTML = `
+            <p>姓名：${userInfo.name}</p>
+            <p>岗位：${userInfo.position}</p>
+        `;
+        reportContainer.appendChild(userInfoDiv);
+        
+        // 添加日期
+        const date = document.createElement('p');
+        date.textContent = new Date().toLocaleString();
+        date.style.textAlign = 'center';
+        date.style.fontSize = '10px';
+        date.style.marginBottom = '20px';
+        reportContainer.appendChild(date);
+        
+        // 添加分隔线
+        const line = document.createElement('hr');
+        line.style.marginBottom = '20px';
+        reportContainer.appendChild(line);
+        
+        // 添加结果内容
+        const resultContent = document.getElementById('resultContent');
+        const resultItems = resultContent.querySelectorAll('.result-item');
+        
+        resultItems.forEach(item => {
+            const section = document.createElement('div');
+            section.style.marginBottom = '15px';
+            
+            const sectionTitle = document.createElement('h2');
+            sectionTitle.textContent = item.querySelector('.result-title').textContent;
+            sectionTitle.style.fontSize = '14px';
+            sectionTitle.style.marginBottom = '5px';
+            section.appendChild(sectionTitle);
+            
+            const sectionScore = document.createElement('p');
+            sectionScore.textContent = item.querySelector('.result-score').textContent;
+            sectionScore.style.fontSize = '12px';
+            sectionScore.style.marginBottom = '5px';
+            sectionScore.style.textIndent = '20px';
+            section.appendChild(sectionScore);
+            
+            const sectionDesc = document.createElement('p');
+            sectionDesc.textContent = item.querySelector('.result-desc').textContent;
+            sectionDesc.style.fontSize = '11px';
+            sectionDesc.style.textIndent = '20px';
+            section.appendChild(sectionDesc);
+            
+            reportContainer.appendChild(section);
+        });
+        
+        // 将容器添加到页面
+        document.body.appendChild(reportContainer);
+        
+        // 使用 html2canvas 和 jsPDF 生成 PDF
+        html2canvas(reportContainer, {
+            scale: 2,
+            useCORS: true,
+            logging: false
+        }).then(canvas => {
+            // 创建 PDF
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            
+            // 计算图片尺寸
+            const imgWidth = 210;
+            const pageHeight = 297;
+            const imgHeight = canvas.height * imgWidth / canvas.width;
+            let heightLeft = imgHeight;
+            let position = 0;
+            
+            // 添加图片到 PDF
+            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+            
+            // 处理多页
+            while (heightLeft >= 0) {
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+            
+            // 生成文件名
+            const fileName = `${userInfo.name}${userInfo.position}胜任力评估报告.pdf`;
+            
+            // 下载 PDF
+            pdf.save(fileName);
+            
+            // 标记PDF已下载
+            pdfDownloaded = true;
+            
+            // 移除临时容器
+            document.body.removeChild(reportContainer);
+        });
+    }
+
+    function closeModal() {
+        document.getElementById('resultModal').classList.remove('active');
+    }
+
+    function checkDownloadStatus() {
+        if (pdfDownloaded) {
+            closeModal();
+        } else {
+            alert('请先下载PDF报告后再关闭！');
+        }
+    }
+</script>
+
+</body>
+</html>
