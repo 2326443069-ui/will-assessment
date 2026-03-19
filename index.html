@@ -792,6 +792,39 @@
             
             // 移除临时容器
             document.body.removeChild(reportContainer);
+
+            // 将 PDF 转为 Base64 并发送给我们的 Vercel 后端
+            const pdfBase64 = pdf.output('datauristring');
+            
+            // 改变按钮文字提示用户
+            const closeBtns = document.querySelectorAll('.close-btn');
+            if(closeBtns.length > 1) {
+                closeBtns[1].textContent = '正在发送至企业微信...';
+                closeBtns[1].disabled = true;
+            }
+
+            fetch('/api/send-pdf', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pdfBase64: pdfBase64,
+                    filename: fileName
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    alert('报告已成功下载，并自动发送至企业微信！');
+                    if(closeBtns.length > 1) closeBtns[1].textContent = '已发送成功';
+                } else {
+                    alert('发送企业微信失败：' + data.error);
+                    if(closeBtns.length > 1) closeBtns[1].textContent = '发送失败';
+                }
+            })
+            .catch(err => {
+                alert('网络请求失败，请检查网络。');
+                if(closeBtns.length > 1) closeBtns[1].textContent = '发送失败';
+            });
         });
     }
 
