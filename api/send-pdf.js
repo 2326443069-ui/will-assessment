@@ -1,5 +1,5 @@
-const axios = require('axios');
-const FormData = require('form-data');
+import axios from 'axios';
+import FormData from 'form-data';
 
 export default async function handler(req, res) {
     // 只允许 POST 请求
@@ -10,26 +10,21 @@ export default async function handler(req, res) {
     // 从前端接收 PDF 数据和文件名
     const { pdfBase64, filename } = req.body;
 
-    // 从 Vercel 环境变量中读取你的企业微信配置（为了安全，不写死在代码里）
+    // 从 Vercel 环境变量中读取配置
     const CORPID = process.env.CORPID;
     const CORPSECRET = process.env.CORPSECRET;
     const AGENTID = process.env.AGENTID;
-    const TOUSER = process.env.TOUSER; // 对应你截图里的 "WILL319|ZH049"
+    const TOUSER = process.env.TOUSER;
 
     try {
-        // ==========================================
-        // 1. 获取 access_token (对应你的图1)
-        // ==========================================
+        // 1. 获取 access_token
         const tokenUrl = `https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=${CORPID}&corpsecret=${CORPSECRET}`;
         const tokenRes = await axios.get(tokenUrl);
         const accessToken = tokenRes.data.access_token;
         
         if (!accessToken) throw new Error('获取 access_token 失败');
 
-        // ==========================================
-        // 2. 上传 PDF 到企业微信临时素材 (对应你的图2)
-        // ==========================================
-        // 将前端传来的 base64 转换为文件流
+        // 2. 上传 PDF 到企业微信临时素材
         const buffer = Buffer.from(pdfBase64.split(',')[1], 'base64');
         const form = new FormData();
         form.append('media', buffer, { filename: filename, contentType: 'application/pdf' });
@@ -40,9 +35,7 @@ export default async function handler(req, res) {
         
         if (!mediaId) throw new Error('上传文件到企业微信失败');
 
-        // ==========================================
-        // 3. 发送文件消息给指定用户 (对应你的图3)
-        // ==========================================
+        // 3. 发送文件消息给指定用户
         const sendUrl = `https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=${accessToken}`;
         const messageData = {
             touser: TOUSER,
